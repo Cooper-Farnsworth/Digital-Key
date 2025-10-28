@@ -1,11 +1,10 @@
 #include <Arduino.h>
 
-// Используем другие пины
 const int red_light = 25;
 const int red_button = 23;
 const int green_button = 22;
 const int blue_button = 21;
-const int yellow_button = 2; // ИЗМЕНИТЕ ПИН!
+const int yellow_button = 15;
 
 const int door_code[] = {3, 1, 4, 2};
 int input_code[] = {0, 0, 0, 0};
@@ -17,19 +16,20 @@ uint32_t start_time = 0;
 bool door_is_open = true;
 
 // Для обработки нажатий кнопок
-bool last_red_state = LOW;
-bool last_green_state = LOW;
-bool last_blue_state = LOW;
-bool last_yellow_state = LOW;
+bool last_red_state = LOW;    // ИЗМЕНИТЬ на HIGH
+bool last_green_state = HIGH;  // ИЗМЕНИТЬ на HIGH
+bool last_blue_state = HIGH;   // ИЗМЕНИТЬ на HIGH
+bool last_yellow_state = HIGH; // ИЗМЕНИТЬ на HIGH
 
 void setup()
 {
   pinMode(red_light, OUTPUT);
 
-  pinMode(red_button, INPUT_PULLDOWN);
-  pinMode(green_button, INPUT_PULLDOWN);
-  pinMode(blue_button, INPUT_PULLDOWN);
-  pinMode(yellow_button, INPUT_PULLDOWN);
+  // ИЗМЕНИТЬ на INPUT_PULLUP
+  pinMode(red_button, INPUT_PULLUP);
+  pinMode(green_button, INPUT_PULLUP);
+  pinMode(blue_button, INPUT_PULLUP);
+  pinMode(yellow_button, INPUT_PULLUP);
 
   Serial.begin(115200);
   Serial.println("System started");
@@ -66,13 +66,14 @@ void handle_button_press(int button_value) {
   }
 }
 
-// Функция для проверки нажатия кнопки с антидребезгом
+// Функция для проверки нажатия кнопки с антидребезгом (ИЗМЕНИТЬ логику)
 bool buttonPressed(int pin, bool &lastState) {
   bool currentState = digitalRead(pin);
-  if (currentState == HIGH && lastState == LOW) {
+  // ИЗМЕНИТЬ: нажатие - когда кнопка замыкает на GND (LOW)
+  if (currentState == LOW && lastState == HIGH) {
     delay(50); // антидребезг
     currentState = digitalRead(pin);
-    if (currentState == HIGH) {
+    if (currentState == LOW) {
       lastState = currentState;
       return true;
     }
@@ -97,6 +98,20 @@ bool check_input_code() {
 void loop()
 {
   current_time = millis();
+
+  // Добавим отладку состояний кнопок
+  static uint32_t last_debug_time = 0;
+  if (current_time - last_debug_time > 1000) {
+    last_debug_time = current_time;
+    Serial.print("Button states - R:");
+    Serial.print(digitalRead(red_button));
+    Serial.print(" G:");
+    Serial.print(digitalRead(green_button));
+    Serial.print(" B:");
+    Serial.print(digitalRead(blue_button));
+    Serial.print(" Y:");
+    Serial.println(digitalRead(yellow_button));
+  }
 
   // Обработка нажатий кнопок (только если дверь закрыта)
   if (!door_is_open) {

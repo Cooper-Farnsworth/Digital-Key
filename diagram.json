@@ -48,9 +48,9 @@
     [ "esp:23", "btn4:1.l", "green", [ "h0" ] ],
     [ "btn3:1.l", "esp:22", "green", [ "h-57.6", "v-38.4" ] ],
     [ "btn2:1.l", "esp:21", "green", [ "h-67.2", "v-67.2" ] ],
-    [ "btn1:1.l", "esp:0", "green", [ "h-67.2", "v-48" ] ],
     [ "esp:GND.1", "led1:C", "black", [ "h0" ] ],
-    [ "led1:A", "esp:25", "green", [ "h0" ] ]
+    [ "led1:A", "esp:25", "green", [ "h0" ] ],
+    [ "esp:15", "btn1:1.l", "green", [ "h24.04", "v28.8" ] ]
   ],
   "dependencies": {}
 }

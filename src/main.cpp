@@ -1,14 +1,15 @@
 #include <Arduino.h>
 
+// Используем другие пины
 const int red_light = 25;
 const int red_button = 23;
 const int green_button = 22;
 const int blue_button = 21;
-const int yellow_button = 0;
+const int yellow_button = 2; // ИЗМЕНИТЕ ПИН!
 
 const int door_code[] = {3, 1, 4, 2};
 int input_code[] = {0, 0, 0, 0};
-int input_index = 0; // Текущая позиция для ввода цифры
+int input_index = 0;
 
 uint32_t door_open_timer = 10000;
 uint32_t current_time = millis();
@@ -32,6 +33,16 @@ void setup()
 
   Serial.begin(115200);
   Serial.println("System started");
+  
+  // Вывод начальных состояний кнопок для отладки
+  Serial.print("Initial button states - Red: ");
+  Serial.print(digitalRead(red_button));
+  Serial.print(" Green: ");
+  Serial.print(digitalRead(green_button));
+  Serial.print(" Blue: ");
+  Serial.print(digitalRead(blue_button));
+  Serial.print(" Yellow: ");
+  Serial.println(digitalRead(yellow_button));
 }
 
 bool IsDark()
@@ -55,12 +66,31 @@ void handle_button_press(int button_value) {
   }
 }
 
+// Функция для проверки нажатия кнопки с антидребезгом
+bool buttonPressed(int pin, bool &lastState) {
+  bool currentState = digitalRead(pin);
+  if (currentState == HIGH && lastState == LOW) {
+    delay(50); // антидребезг
+    currentState = digitalRead(pin);
+    if (currentState == HIGH) {
+      lastState = currentState;
+      return true;
+    }
+  }
+  lastState = currentState;
+  return false;
+}
+
 bool check_input_code() {
+  Serial.print("Checking code: ");
   for (int i = 0; i < 4; i++) {
+    Serial.print(input_code[i]);
     if (input_code[i] != door_code[i]) {
+      Serial.println(" - WRONG!");
       return false;
     }
   }
+  Serial.println(" - CORRECT!");
   return true;
 }
 
@@ -70,41 +100,22 @@ void loop()
 
   // Обработка нажатий кнопок (только если дверь закрыта)
   if (!door_is_open) {
-    // Красная кнопка (1)
-    if (digitalRead(red_button) == HIGH && last_red_state == LOW) {
-      delay(50); // антидребезг
-      if (digitalRead(red_button) == HIGH) {
-        handle_button_press(1);
-      }
+    // Проверяем все кнопки
+    if (buttonPressed(red_button, last_red_state)) {
+      handle_button_press(1);
     }
-    last_red_state = digitalRead(red_button);
     
-    // Зеленая кнопка (2)
-    if (digitalRead(green_button) == HIGH && last_green_state == LOW) {
-      delay(50);
-      if (digitalRead(green_button) == HIGH) {
-        handle_button_press(2);
-      }
+    if (buttonPressed(green_button, last_green_state)) {
+      handle_button_press(2);
     }
-    last_green_state = digitalRead(green_button);
     
-    // Синяя кнопка (3)
-    if (digitalRead(blue_button) == HIGH && last_blue_state == LOW) {
-      delay(50);
-      if (digitalRead(blue_button) == HIGH) {
-        handle_button_press(3);
-      }
+    if (buttonPressed(blue_button, last_blue_state)) {
+      handle_button_press(3);
     }
-    last_blue_state = digitalRead(blue_button);
     
-    // Желтая кнопка (4) - РАСКОММЕНТИРОВАТЬ!
-    if (digitalRead(yellow_button) == HIGH && last_yellow_state == LOW) {
-      delay(50);
-      if (digitalRead(yellow_button) == HIGH) {
-        handle_button_press(4);
-      }
+    if (buttonPressed(yellow_button, last_yellow_state)) {
+      handle_button_press(4);
     }
-    last_yellow_state = digitalRead(yellow_button);
     
     // Проверяем код, когда введены все 4 цифры
     if (input_index >= 4) {
@@ -121,6 +132,7 @@ void loop()
         input_code[i] = 0;
       }
       input_index = 0;
+      Serial.println("Input reset");
     }
   }
 
